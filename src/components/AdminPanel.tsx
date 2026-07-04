@@ -48,7 +48,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode.toLowerCase() === "admin") {
+    if (passcode === "1986") {
       setIsAuthenticated(true);
       setLoginError(false);
     } else {
@@ -186,7 +186,6 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                     }`}
                     autoFocus
                   />
-                  <p className="text-left font-mono text-[9px] text-[#E2D4B7]/40">Tip: Type <strong className="text-[#E2D4B7]">admin</strong> to access</p>
                 </div>
 
                 <button

@@ -57,6 +57,26 @@ export default function App() {
   });
   const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "submitted">("idle");
 
+  // Check for hidden admin panel activation via URL parameter or hash
+  React.useEffect(() => {
+    const checkAdminRoute = () => {
+      const hasAdminHash = window.location.hash === "#admin";
+      const hasAdminQuery = window.location.search.includes("admin");
+      if (hasAdminHash || hasAdminQuery) {
+        setIsAdminOpen(true);
+      }
+    };
+
+    // Check on initial load
+    checkAdminRoute();
+
+    // Listen to hash changes in real-time
+    window.addEventListener("hashchange", checkAdminRoute);
+    return () => {
+      window.removeEventListener("hashchange", checkAdminRoute);
+    };
+  }, []);
+
   const services: Service[] = content.servicesSection.items;
   const pillars: Differentiator[] = content.whySection.items;
 
@@ -692,16 +712,6 @@ export default function App() {
             </div>
           </footer>
         </div> {/* End Beige Section Wrapper */}
-
-        {/* Floating Admin Trigger */}
-        <button
-          onClick={() => setIsAdminOpen(true)}
-          className="fixed bottom-6 left-6 z-40 p-3 bg-[#030C1B] hover:bg-[#071329] text-[#E2D4B7] rounded-xl border border-[#E2D4B7]/20 shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer flex items-center gap-2 group font-mono text-[10px] uppercase tracking-wider"
-          title="Website Administration"
-        >
-          <Settings className="w-4 h-4 animate-[spin_10s_linear_infinite] group-hover:rotate-45 transition-transform" />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-out whitespace-nowrap">Admin Panel</span>
-        </button>
 
         {/* Admin drawer wrapper */}
         <AdminPanel

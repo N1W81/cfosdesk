@@ -1,0 +1,6 @@
+{
+  "name": "CFO's Desk",
+  "description": "A premium, agency-grade website for CFO's Desk, a fractional CFO and financial strategy firm.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

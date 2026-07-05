@@ -455,28 +455,28 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                       {/* Live Visual Preview Card */}
                       <div className="p-6 rounded-2xl border border-[#E2D4B7]/10 bg-white/[0.01] backdrop-blur-md space-y-4">
                         <span className="font-mono text-[9px] uppercase tracking-widest text-[#E2D4B7] block font-semibold">Live Brand Preview (Header Simulation)</span>
-                        <div className="p-4 rounded-xl border border-white/5 bg-[#030C1B] flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <div className="p-6 rounded-xl border border-white/5 bg-[#030C1B] flex items-center justify-between">
+                          <div className="flex items-center gap-4">
                             {editedContent.logo?.type === "image" && editedContent.logo?.imageUrl ? (
                               <img
                                 src={editedContent.logo.imageUrl}
                                 alt="Emblem Preview"
-                                className="w-10 h-10 rounded-xl object-contain border border-[#E2D4B7]/30 bg-white/5 p-1"
+                                className="w-16 h-16 md:w-24 md:h-24 rounded-2xl object-contain border border-[#E2D4B7]/30 bg-white/5 p-1.5 shadow-lg"
                                 referrerPolicy="no-referrer"
                                 onError={(e) => {
                                   (e.target as HTMLElement).style.display = 'none';
                                 }}
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 text-[#E2D4B7] font-serif font-semibold tracking-wider text-lg">
+                              <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 text-[#E2D4B7] font-serif font-semibold tracking-wider text-xl md:text-3xl">
                                 {editedContent.logo?.initials || "CD"}
                               </div>
                             )}
-                            <div className="flex flex-col">
-                              <span className="font-serif text-base font-semibold tracking-widest text-[#F5F2EB]">
+                            <div className="flex flex-col justify-center">
+                              <span className="font-serif text-lg md:text-2xl font-semibold tracking-widest text-[#F5F2EB]">
                                 {editedContent.logo?.text || "CFO'S DESK"}
                               </span>
-                              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400">
+                              <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-zinc-400">
                                 {editedContent.logo?.subtext || "Fractional Partners"}
                               </span>
                             </div>

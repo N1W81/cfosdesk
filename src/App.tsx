@@ -666,20 +666,20 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 items-start pb-12 border-b border-[#030C1B]/10">
                 {/* Brand Logo column */}
                 <div className="lg:col-span-4 space-y-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {content.logo?.type === "image" && content.logo?.imageUrl ? (
                       <img
                         src={content.logo.imageUrl}
                         alt={content.logo.text || "CFO'S DESK"}
-                        className="w-10 h-10 rounded-xl object-contain border border-[#030C1B]/10 bg-[#030C1B] p-1 shadow-md"
+                        className="w-16 h-16 md:w-28 md:h-28 rounded-2xl object-contain border border-[#030C1B]/10 bg-[#030C1B] p-1.5 shadow-xl"
                         referrerPolicy="no-referrer"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center bg-[#030C1B] text-[#F5F2EB] font-serif font-semibold text-lg shadow-md">
+                      <div className="w-16 h-16 md:w-28 md:h-28 rounded-2xl border border-white/5 flex items-center justify-center bg-[#030C1B] text-[#F5F2EB] font-serif font-semibold text-xl md:text-3xl shadow-xl">
                         {content.logo?.initials || "CD"}
                       </div>
                     )}
-                    <span className="font-serif text-lg tracking-widest text-[#030C1B] uppercase">
+                    <span className="font-serif text-lg md:text-2xl tracking-widest text-[#030C1B] uppercase font-semibold">
                       {content.logo?.text || content.footer.title}
                     </span>
                   </div>

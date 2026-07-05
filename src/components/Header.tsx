@@ -75,25 +75,37 @@ export default function Header({ logo }: HeaderProps) {
           <a
             href="#"
             onClick={(e) => handleNavClick(e, "#root")}
-            className="flex items-center gap-3 group cursor-pointer"
+            className="flex items-center gap-4 group cursor-pointer"
           >
             {logo?.type === "image" && logo?.imageUrl ? (
               <img
                 src={logo.imageUrl}
                 alt={logo.text || "CFO'S DESK"}
-                className="w-10 h-10 rounded-xl object-contain border border-[#E2D4B7]/30 bg-white/5 backdrop-blur-md p-1 group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_15px_rgba(226,212,183,0.15)] transition-all duration-300"
+                className={`rounded-2xl object-contain border border-[#E2D4B7]/30 bg-[#030C1B] p-1.5 shadow-2xl transition-all duration-500 ease-out group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_25px_rgba(226,212,183,0.25)] ${
+                  isScrolled
+                    ? "w-14 h-14 md:w-16 md:h-16"
+                    : "w-20 h-20 md:w-28 md:h-28"
+                }`}
                 referrerPolicy="no-referrer"
               />
             ) : (
-              <div className="w-10 h-10 rounded-xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 backdrop-blur-md text-[#E2D4B7] font-serif font-semibold tracking-wider transition-all duration-300 group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_15px_rgba(226,212,183,0.15)] text-lg">
+              <div className={`rounded-2xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 backdrop-blur-md text-[#E2D4B7] font-serif font-semibold tracking-wider transition-all duration-500 ease-out group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_25px_rgba(226,212,183,0.25)] ${
+                isScrolled
+                  ? "w-14 h-14 md:w-16 md:h-16 text-base"
+                  : "w-20 h-20 md:w-28 md:h-28 text-2xl md:text-4xl"
+              }`}>
                 {logo?.initials || "CD"}
               </div>
             )}
-            <div className="flex flex-col">
-              <span className="font-serif text-base font-semibold tracking-widest text-[#F5F2EB] group-hover:text-[#E2D4B7] transition-colors">
+            <div className="flex flex-col justify-center">
+              <span className={`font-serif font-semibold tracking-widest text-[#F5F2EB] group-hover:text-[#E2D4B7] transition-all duration-500 ${
+                isScrolled ? "text-base md:text-lg" : "text-lg md:text-2xl"
+              }`}>
                 {logo?.text || "CFO'S DESK"}
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400">
+              <span className={`font-mono uppercase tracking-widest text-zinc-400 transition-all duration-500 ${
+                isScrolled ? "text-[8px] md:text-[9px]" : "text-[9px] md:text-[11px]"
+              }`}>
                 {logo?.subtext || "Fractional Partners"}
               </span>
             </div>

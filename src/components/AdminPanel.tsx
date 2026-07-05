@@ -16,7 +16,8 @@ import {
   FileText,
   MapPin,
   CheckCircle2,
-  Image
+  Image,
+  UploadCloud
 } from "lucide-react";
 import { WebsiteContent, Service, Differentiator, ChecklistItem } from "../types";
 import { defaultContent } from "../defaultContent";
@@ -39,6 +40,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   const [editedContent, setEditedContent] = useState<WebsiteContent>({ ...currentContent });
   const [activeTab, setActiveTab] = useState<TabType>("logo");
   const [showSaveToast, setShowSaveToast] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Sync state with currentContent when panel is opened
   React.useEffect(() => {
@@ -71,6 +73,26 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
     if (window.confirm("Are you sure you want to reset all copy back to the original default? This will overwrite your custom changes.")) {
       setEditedContent({ ...defaultContent });
     }
+  };
+
+  const handleLogoUpload = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setEditedContent(prev => ({
+          ...prev,
+          logo: {
+            ...prev.logo,
+            type: "image",
+            imageUrl: event.target!.result as string
+          }
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Helper to update deeply nested strings in state
@@ -415,23 +437,90 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
 
                       {/* Type-Specific Fields */}
                       {editedContent.logo?.type === "image" ? (
-                        <div className="space-y-1.5">
-                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Emblem Image Path / URL</label>
-                          <input
-                            type="text"
-                            value={editedContent.logo?.imageUrl || ""}
-                            onChange={(e) => {
-                              setEditedContent(prev => ({
-                                ...prev,
-                                logo: { ...prev.logo, imageUrl: e.target.value }
-                              }));
-                            }}
-                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none font-mono"
-                            placeholder="/cfosdesk_logo.jpg"
-                          />
-                          <p className="text-zinc-500 text-[10px] font-mono leading-relaxed mt-1">
-                            Tip: Put your images in the "public" folder to load them using a clean local path like "/cfosdesk_logo.jpg".
-                          </p>
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Upload Custom Logo Image</label>
+                            
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                setIsDragging(true);
+                              }}
+                              onDragLeave={() => setIsDragging(false)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setIsDragging(false);
+                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                  handleLogoUpload(e.dataTransfer.files[0]);
+                                }
+                              }}
+                              onClick={() => {
+                                const fileInput = document.getElementById("logo-file-picker");
+                                if (fileInput) fileInput.click();
+                              }}
+                              className={`group border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 bg-white/[0.01] ${
+                                isDragging
+                                  ? "border-[#E2D4B7] bg-[#E2D4B7]/5 shadow-[0_0_20px_rgba(226,212,183,0.1)]"
+                                  : "border-white/10 hover:border-[#E2D4B7]/50 hover:bg-white/[0.02]"
+                              }`}
+                            >
+                              <input
+                                id="logo-file-picker"
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    handleLogoUpload(e.target.files[0]);
+                                  }
+                                }}
+                              />
+                              <UploadCloud className="w-10 h-10 text-[#E2D4B7]/60 group-hover:text-[#E2D4B7] transition-all duration-300 mb-3" />
+                              <p className="text-sm text-[#F5F2EB] font-light">
+                                Drag & Drop your logo image here, or <span className="text-[#E2D4B7] font-semibold underline decoration-dotted decoration-1">click to browse</span>
+                              </p>
+                              <p className="text-[10px] font-mono text-zinc-500 mt-1.5">
+                                Supports PNG, JPG, JPEG, WEBP or SVG format
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Image URL / Local File Path</label>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditedContent(prev => ({
+                                    ...prev,
+                                    logo: {
+                                      ...prev.logo,
+                                      imageUrl: "/cfosdesk_logo.jpg"
+                                    }
+                                  }));
+                                }}
+                                className="flex items-center gap-1.5 text-[10px] font-mono text-[#E2D4B7]/70 hover:text-[#E2D4B7] transition-colors cursor-pointer"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                Reset to Default Logo
+                              </button>
+                            </div>
+                            <input
+                              type="text"
+                              value={editedContent.logo?.imageUrl || ""}
+                              onChange={(e) => {
+                                setEditedContent(prev => ({
+                                  ...prev,
+                                  logo: { ...prev.logo, imageUrl: e.target.value }
+                                }));
+                              }}
+                              className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none font-mono"
+                              placeholder="/cfosdesk_logo.jpg"
+                            />
+                            <p className="text-zinc-500 text-[10px] font-mono leading-relaxed mt-1">
+                              Note: When you upload a custom file, its data is automatically embedded securely as a base64 string.
+                            </p>
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-1.5">

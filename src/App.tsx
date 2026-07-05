@@ -135,7 +135,7 @@ export default function App() {
           <CustomCursor />
 
           {/* Sticky Header Compact Nav */}
-          <Header />
+          <Header logo={content.logo} />
 
           {/* 1. HERO SECTION */}
           <section id="hero" className="relative min-h-screen flex items-center justify-center pt-24 px-6 md:px-12 overflow-hidden">
@@ -667,11 +667,20 @@ export default function App() {
                 {/* Brand Logo column */}
                 <div className="lg:col-span-4 space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center bg-[#030C1B] text-[#F5F2EB] font-serif font-semibold text-lg shadow-md">
-                      CD
-                    </div>
+                    {content.logo?.type === "image" && content.logo?.imageUrl ? (
+                      <img
+                        src={content.logo.imageUrl}
+                        alt={content.logo.text || "CFO'S DESK"}
+                        className="w-10 h-10 rounded-xl object-contain border border-[#030C1B]/10 bg-[#030C1B] p-1 shadow-md"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-xl border border-white/5 flex items-center justify-center bg-[#030C1B] text-[#F5F2EB] font-serif font-semibold text-lg shadow-md">
+                        {content.logo?.initials || "CD"}
+                      </div>
+                    )}
                     <span className="font-serif text-lg tracking-widest text-[#030C1B] uppercase">
-                      {content.footer.title}
+                      {content.logo?.text || content.footer.title}
                     </span>
                   </div>
                   <p className="text-[#030C1B]/70 text-xs md:text-sm max-w-sm leading-relaxed font-light">

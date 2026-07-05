@@ -3,7 +3,17 @@ import { Menu, X, ArrowUpRight, Phone, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Magnetic from "./Magnetic";
 
-export default function Header() {
+interface HeaderProps {
+  logo?: {
+    type: "text" | "image";
+    initials: string;
+    text: string;
+    subtext: string;
+    imageUrl: string;
+  };
+}
+
+export default function Header({ logo }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
@@ -67,15 +77,24 @@ export default function Header() {
             onClick={(e) => handleNavClick(e, "#root")}
             className="flex items-center gap-3 group cursor-pointer"
           >
-            <div className="w-10 h-10 rounded-xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 backdrop-blur-md text-[#E2D4B7] font-serif font-semibold tracking-wider transition-all duration-300 group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_15px_rgba(226,212,183,0.15)] text-lg">
-              CD
-            </div>
+            {logo?.type === "image" && logo?.imageUrl ? (
+              <img
+                src={logo.imageUrl}
+                alt={logo.text || "CFO'S DESK"}
+                className="w-10 h-10 rounded-xl object-contain border border-[#E2D4B7]/30 bg-white/5 backdrop-blur-md p-1 group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_15px_rgba(226,212,183,0.15)] transition-all duration-300"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 backdrop-blur-md text-[#E2D4B7] font-serif font-semibold tracking-wider transition-all duration-300 group-hover:border-[#E2D4B7] group-hover:shadow-[0_0_15px_rgba(226,212,183,0.15)] text-lg">
+                {logo?.initials || "CD"}
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="font-serif text-base font-semibold tracking-widest text-[#F5F2EB] group-hover:text-[#E2D4B7] transition-colors">
-                CFO'S DESK
+                {logo?.text || "CFO'S DESK"}
               </span>
               <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400">
-                Fractional Partners
+                {logo?.subtext || "Fractional Partners"}
               </span>
             </div>
           </a>

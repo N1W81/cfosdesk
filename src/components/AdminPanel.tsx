@@ -15,7 +15,8 @@ import {
   Sliders, 
   FileText,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  Image
 } from "lucide-react";
 import { WebsiteContent, Service, Differentiator, ChecklistItem } from "../types";
 import { defaultContent } from "../defaultContent";
@@ -27,7 +28,7 @@ interface AdminPanelProps {
   onSave: (newContent: WebsiteContent) => void;
 }
 
-type TabType = "hero" | "services" | "about_vision" | "what_we_do" | "pillars_founder" | "contact_footer";
+type TabType = "logo" | "hero" | "services" | "about_vision" | "what_we_do" | "pillars_founder" | "contact_footer";
 
 export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,7 +37,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   
   // Local state copy of the website content
   const [editedContent, setEditedContent] = useState<WebsiteContent>({ ...currentContent });
-  const [activeTab, setActiveTab] = useState<TabType>("hero");
+  const [activeTab, setActiveTab] = useState<TabType>("logo");
   const [showSaveToast, setShowSaveToast] = useState(false);
 
   // Sync state with currentContent when panel is opened
@@ -246,6 +247,16 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                   <p className="font-mono text-[9px] uppercase tracking-widest text-[#DCAE9F]/50 px-2 mb-3">WEBSITE SECTIONS</p>
                   
                   <button
+                    onClick={() => setActiveTab("logo")}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider text-left transition-all ${
+                      activeTab === "logo" ? "bg-[#E2D4B7] text-black font-semibold" : "text-zinc-400 hover:text-[#F5F2EB] hover:bg-white/5"
+                    }`}
+                  >
+                    <Image className="w-4 h-4" />
+                    <span>Logo & Branding</span>
+                  </button>
+
+                  <button
                     onClick={() => setActiveTab("hero")}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono uppercase tracking-wider text-left transition-all ${
                       activeTab === "hero" ? "bg-[#E2D4B7] text-black font-semibold" : "text-zinc-400 hover:text-[#F5F2EB] hover:bg-white/5"
@@ -318,6 +329,166 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
               {/* Scrollable Form Content */}
               <div className="flex-1 p-8 overflow-y-auto space-y-8 bg-[#030C1B]">
                 
+                {/* LOGO & BRANDING TAB */}
+                {activeTab === "logo" && (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-serif text-xl font-light text-[#E2D4B7]">Configure Logo & Branding Settings</h3>
+                        <p className="text-zinc-400 text-xs mt-1">Control how your brand identity renders at the top and bottom of the website.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      {/* Logo Type Selector */}
+                      <div className="space-y-2">
+                        <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Logo Type</label>
+                        <div className="flex gap-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, type: "image" }
+                              }));
+                            }}
+                            className={`flex-1 py-3 px-4 rounded-xl text-xs font-mono uppercase tracking-wider border transition-all cursor-pointer ${
+                              editedContent.logo?.type === "image"
+                                ? "bg-[#E2D4B7] text-black border-[#E2D4B7] font-semibold"
+                                : "bg-white/[0.02] text-zinc-400 border-white/10 hover:text-[#F5F2EB] hover:bg-white/5"
+                            }`}
+                          >
+                            Premium Image Emblem
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, type: "text" }
+                              }));
+                            }}
+                            className={`flex-1 py-3 px-4 rounded-xl text-xs font-mono uppercase tracking-wider border transition-all cursor-pointer ${
+                              editedContent.logo?.type === "text"
+                                ? "bg-[#E2D4B7] text-black border-[#E2D4B7] font-semibold"
+                                : "bg-white/[0.02] text-zinc-400 border-white/10 hover:text-[#F5F2EB] hover:bg-white/5"
+                            }`}
+                          >
+                            Initials & Typography Text
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Brand Name Text & Subtext */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Brand Name Text</label>
+                          <input
+                            type="text"
+                            value={editedContent.logo?.text || ""}
+                            onChange={(e) => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, text: e.target.value }
+                              }));
+                            }}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
+                            placeholder="CFO'S DESK"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Subtext / Tagline</label>
+                          <input
+                            type="text"
+                            value={editedContent.logo?.subtext || ""}
+                            onChange={(e) => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, subtext: e.target.value }
+                              }));
+                            }}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
+                            placeholder="Fractional Partners"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Type-Specific Fields */}
+                      {editedContent.logo?.type === "image" ? (
+                        <div className="space-y-1.5">
+                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Emblem Image Path / URL</label>
+                          <input
+                            type="text"
+                            value={editedContent.logo?.imageUrl || ""}
+                            onChange={(e) => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, imageUrl: e.target.value }
+                              }));
+                            }}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none font-mono"
+                            placeholder="/cfosdesk_logo.jpg"
+                          />
+                          <p className="text-zinc-500 text-[10px] font-mono leading-relaxed mt-1">
+                            Tip: Put your images in the "public" folder to load them using a clean local path like "/cfosdesk_logo.jpg".
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Brand Initials Box Text (Max 3 chars)</label>
+                          <input
+                            type="text"
+                            maxLength={3}
+                            value={editedContent.logo?.initials || ""}
+                            onChange={(e) => {
+                              setEditedContent(prev => ({
+                                ...prev,
+                                logo: { ...prev.logo, initials: e.target.value }
+                              }));
+                            }}
+                            className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
+                            placeholder="CD"
+                          />
+                        </div>
+                      )}
+
+                      {/* Live Visual Preview Card */}
+                      <div className="p-6 rounded-2xl border border-[#E2D4B7]/10 bg-white/[0.01] backdrop-blur-md space-y-4">
+                        <span className="font-mono text-[9px] uppercase tracking-widest text-[#E2D4B7] block font-semibold">Live Brand Preview (Header Simulation)</span>
+                        <div className="p-4 rounded-xl border border-white/5 bg-[#030C1B] flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {editedContent.logo?.type === "image" && editedContent.logo?.imageUrl ? (
+                              <img
+                                src={editedContent.logo.imageUrl}
+                                alt="Emblem Preview"
+                                className="w-10 h-10 rounded-xl object-contain border border-[#E2D4B7]/30 bg-white/5 p-1"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl border border-[#E2D4B7]/30 flex items-center justify-center bg-white/5 text-[#E2D4B7] font-serif font-semibold tracking-wider text-lg">
+                                {editedContent.logo?.initials || "CD"}
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="font-serif text-base font-semibold tracking-widest text-[#F5F2EB]">
+                                {editedContent.logo?.text || "CFO'S DESK"}
+                              </span>
+                              <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-400">
+                                {editedContent.logo?.subtext || "Fractional Partners"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <span className="text-[10px] uppercase font-mono px-2 py-1 rounded bg-[#E2D4B7]/10 text-[#E2D4B7]">Header Nav Sim</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* HERO TAB */}
                 {activeTab === "hero" && (
                   <div className="space-y-6">

@@ -1,6 +1,13 @@
 import { WebsiteContent } from "./types";
 
 export const defaultContent: WebsiteContent = {
+  logo: {
+    type: "image",
+    initials: "CD",
+    text: "CFO'S DESK",
+    subtext: "Fractional Partners",
+    imageUrl: "/cfosdesk_logo.jpg",
+  },
   hero: {
     badge: "Fractional CFO & Advisory",
     headlinePart1: "Your Fractional CFO Partner:",

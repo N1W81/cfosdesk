@@ -27,6 +27,13 @@ export interface ContactFormInput {
 }
 
 export interface WebsiteContent {
+  logo: {
+    type: "text" | "image";
+    initials: string;
+    text: string;
+    subtext: string;
+    imageUrl: string;
+  };
   hero: {
     badge: string;
     headlinePart1: string;

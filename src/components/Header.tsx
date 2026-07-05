@@ -106,7 +106,7 @@ export default function Header({ logo }: HeaderProps) {
               <span className={`font-mono uppercase tracking-widest text-zinc-400 transition-all duration-500 ${
                 isScrolled ? "text-[8px] md:text-[9px]" : "text-[9px] md:text-[11px]"
               }`}>
-                {logo?.subtext || "Fractional Partners"}
+                {logo?.subtext || "Fractional CFO"}
               </span>
             </div>
           </a>

@@ -5,7 +5,7 @@ export const defaultContent: WebsiteContent = {
     type: "image",
     initials: "CD",
     text: "CFO'S DESK",
-    subtext: "Fractional Partners",
+    subtext: "Fractional CFO",
     imageUrl: "/cfosdesk_logo.jpg",
   },
   hero: {

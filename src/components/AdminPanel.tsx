@@ -408,7 +408,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                               }));
                             }}
                             className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
-                            placeholder="Fractional Partners"
+                            placeholder="Fractional CFO"
                           />
                         </div>
                       </div>
@@ -477,7 +477,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                                 {editedContent.logo?.text || "CFO'S DESK"}
                               </span>
                               <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-zinc-400">
-                                {editedContent.logo?.subtext || "Fractional Partners"}
+                                {editedContent.logo?.subtext || "Fractional CFO"}
                               </span>
                             </div>
                           </div>

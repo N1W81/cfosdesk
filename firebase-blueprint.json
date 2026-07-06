@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "website_config": {
+      "title": "Website Configuration",
+      "description": "Global shared website content and logo settings",
+      "type": "object",
+      "properties": {
+        "logo": { "type": "object" },
+        "hero": { "type": "object" },
+        "marquee": { "type": "array" },
+        "servicesSection": { "type": "object" },
+        "ctaBanner": { "type": "object" },
+        "aboutSection": { "type": "object" },
+        "whatWeDo": { "type": "object" },
+        "visionSection": { "type": "object" },
+        "whySection": { "type": "object" },
+        "founderSpotlight": { "type": "object" },
+        "contactSection": { "type": "object" },
+        "footer": { "type": "object" }
+      }
+    }
+  },
+  "firestore": {
+    "/config/{configId}": {
+      "schema": "website_config",
+      "description": "Store system configurations, such as 'website' for global content"
+    }
+  }
+}

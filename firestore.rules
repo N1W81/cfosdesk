@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net - default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Allow reading and writing website configurations
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if configId == 'website';
+    }
+  }
+}

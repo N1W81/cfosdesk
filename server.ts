@@ -2,6 +2,8 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 async function startServer() {
   const app = express();
@@ -13,28 +15,72 @@ async function startServer() {
 
   const contentFilePath = path.join(process.cwd(), "content.json");
 
+  // Initialize Firebase Firestore for global persistence
+  let db: any = null;
+  try {
+    const firebaseConfigPath = path.join(process.cwd(), "firebase-applet-config.json");
+    if (fs.existsSync(firebaseConfigPath)) {
+      const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf8"));
+      const firebaseApp = initializeApp(firebaseConfig);
+      db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+      console.log("Firebase Firestore initialized successfully. ID:", firebaseConfig.firestoreDatabaseId);
+    } else {
+      console.warn("firebase-applet-config.json not found. Falling back to local file storage only.");
+    }
+  } catch (error) {
+    console.error("Failed to initialize Firebase Firestore, falling back to local file storage:", error);
+  }
+
   // API to retrieve the current shared content
-  app.get("/api/content", (req, res) => {
+  app.get("/api/content", async (req, res) => {
     try {
+      // 1. Try reading from Firestore first for true global state
+      if (db) {
+        try {
+          const docRef = doc(db, "config", "website");
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            console.log("Loaded content globally from Firebase Firestore.");
+            return res.json(docSnap.data());
+          }
+        } catch (dbError) {
+          console.error("Error fetching from Firestore, trying local file fallback:", dbError);
+        }
+      }
+
+      // 2. Fallback to local content.json on disk
       if (fs.existsSync(contentFilePath)) {
         const fileData = fs.readFileSync(contentFilePath, "utf8");
         return res.json(JSON.parse(fileData));
       }
     } catch (error) {
-      console.error("Error reading content file:", error);
+      console.error("Error reading content:", error);
     }
-    // Return null if no file yet or error occurs, client will fall back to defaultContent
+    // Return null if no data yet, client will fall back to defaultContent
     res.json(null);
   });
 
   // API to update the shared content for everyone
-  app.post("/api/content", (req, res) => {
+  app.post("/api/content", async (req, res) => {
     try {
       const data = req.body;
+
+      // 1. Persist to Firestore first for global synchronicity
+      if (db) {
+        try {
+          const docRef = doc(db, "config", "website");
+          await setDoc(docRef, data);
+          console.log("Saved content globally to Firebase Firestore.");
+        } catch (dbError) {
+          console.error("Error saving to Firestore:", dbError);
+        }
+      }
+
+      // 2. Also save to local file as backup and for offline reference
       fs.writeFileSync(contentFilePath, JSON.stringify(data, null, 2), "utf8");
       res.json({ success: true });
     } catch (error: any) {
-      console.error("Error writing content file:", error);
+      console.error("Error writing content:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

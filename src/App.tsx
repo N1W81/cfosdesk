@@ -49,6 +49,25 @@ export default function App() {
   });
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
+  // Fetch global shared content from server on mount
+  useEffect(() => {
+    const fetchGlobalContent = async () => {
+      try {
+        const response = await fetch("/api/content");
+        if (response.ok) {
+          const apiData = await response.json();
+          if (apiData) {
+            setContent(apiData);
+            localStorage.setItem("cfosdesk_content", JSON.stringify(apiData));
+          }
+        }
+      } catch (error) {
+        console.error("Error loading shared content from server:", error);
+      }
+    };
+    fetchGlobalContent();
+  }, []);
+
   const [formInput, setFormInput] = useState<ContactFormInput>({
     name: "",
     email: "",
@@ -103,9 +122,24 @@ export default function App() {
     }, 1500);
   };
 
-  const handleSaveContent = (newContent: WebsiteContent) => {
+  const handleSaveContent = async (newContent: WebsiteContent) => {
     setContent(newContent);
     localStorage.setItem("cfosdesk_content", JSON.stringify(newContent));
+
+    try {
+      const response = await fetch("/api/content", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newContent),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save content on server");
+      }
+    } catch (error) {
+      console.error("Error saving content to server:", error);
+    }
   };
 
   const resetForm = () => {

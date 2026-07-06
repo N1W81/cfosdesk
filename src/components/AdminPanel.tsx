@@ -17,7 +17,9 @@ import {
   MapPin,
   CheckCircle2,
   Image,
-  UploadCloud
+  UploadCloud,
+  Download,
+  Upload
 } from "lucide-react";
 import { WebsiteContent, Service, Differentiator, ChecklistItem } from "../types";
 import { defaultContent } from "../defaultContent";
@@ -93,6 +95,38 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(editedContent, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "cfosdesk_content.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
+  };
+
+  const handleImportJSON = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed && typeof parsed === 'object' && 'logo' in parsed) {
+          setEditedContent(parsed);
+          alert("Configuration loaded successfully! Click 'Save & Apply Changes' at the bottom to publish it globally.");
+        } else {
+          alert("Invalid website configuration file structure.");
+        }
+      } catch (e) {
+        alert("Failed to parse configuration file. Make sure it's valid JSON.");
+      }
+    };
+    reader.readAsText(file);
   };
 
   // Helper to update deeply nested strings in state
@@ -339,12 +373,54 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                   </button>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 text-zinc-400 text-[10px] leading-relaxed font-light space-y-2">
+                <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-3.5">
                   <div className="flex gap-1.5 items-center font-mono text-[9px] uppercase tracking-wider text-[#E2D4B7]">
                     <ShieldAlert className="w-3.5 h-3.5" />
-                    <span>Data Persistence</span>
+                    <span>Global Sync Status</span>
                   </div>
-                  <p>All changes are bound instantly and persisted in your localized browser container for continuous viewing.</p>
+                  <p className="text-zinc-400 text-[10px] leading-relaxed font-light">
+                    Your changes sync globally for everyone via <span className="text-[#E2D4B7] font-medium">Firebase Firestore</span>.
+                  </p>
+                  <p className="text-zinc-500 text-[9px] leading-relaxed font-mono">
+                    Firebase Spark is <span className="text-emerald-400 font-semibold">100% Free</span> (50k reads & 20k writes/day free limit). You will never be billed.
+                  </p>
+
+                  <div className="pt-2 border-t border-white/5 space-y-2">
+                    <p className="font-mono text-[9px] uppercase tracking-wider text-[#DCAE9F]/70">Local Backup Utilities</p>
+                    <button
+                      type="button"
+                      onClick={handleExportJSON}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/[0.03] hover:bg-[#E2D4B7]/10 border border-white/10 hover:border-[#E2D4B7]/40 rounded-xl text-[10px] font-mono uppercase tracking-wider text-[#F5F2EB] transition-all cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#E2D4B7]" />
+                      <span>Export config.json</span>
+                    </button>
+
+                    <div className="relative">
+                      <input
+                        id="config-file-import"
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleImportJSON(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const fileInput = document.getElementById("config-file-import");
+                          if (fileInput) fileInput.click();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white/[0.03] hover:bg-[#E2D4B7]/10 border border-white/10 hover:border-[#E2D4B7]/40 rounded-xl text-[10px] font-mono uppercase tracking-wider text-[#F5F2EB] transition-all cursor-pointer"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#E2D4B7]" />
+                        <span>Import config.json</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

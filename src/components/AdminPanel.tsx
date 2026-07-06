@@ -1387,8 +1387,8 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                 >
                   <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                   <div>
-                    <strong className="block text-emerald-200">Changes Implemented!</strong>
-                    <span>Your edits have been successfully compiled and saved to local storage.</span>
+                    <strong className="block text-emerald-200">Changes Saved Globally!</strong>
+                    <span>Your edits have been synchronized successfully for everyone via Firebase Firestore.</span>
                   </div>
                 </motion.div>
               )}

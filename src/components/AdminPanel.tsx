@@ -790,7 +790,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                           <input
                             type="text"
                             value={editedContent.servicesSection.tag}
-                            onChange={(e) => updateSubField("servicesSection", "tag", "", e.target.value)}
+                            onChange={(e) => updateField("servicesSection", "tag", e.target.value)}
                             className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
                           />
                         </div>
@@ -799,7 +799,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                           <input
                             type="text"
                             value={editedContent.servicesSection.title}
-                            onChange={(e) => updateSubField("servicesSection", "title", "", e.target.value)}
+                            onChange={(e) => updateField("servicesSection", "title", e.target.value)}
                             className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
                           />
                         </div>
@@ -809,7 +809,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                         <textarea
                           rows={2}
                           value={editedContent.servicesSection.description}
-                          onChange={(e) => updateSubField("servicesSection", "description", "", e.target.value)}
+                          onChange={(e) => updateField("servicesSection", "description", e.target.value)}
                           className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-[#F5F2EB] focus:border-[#E2D4B7]/50 focus:outline-none"
                         />
                       </div>

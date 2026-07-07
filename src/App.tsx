@@ -34,13 +34,112 @@ import AdminPanel from "./components/AdminPanel";
 import { defaultContent } from "./defaultContent";
 import { Service, Differentiator, ContactFormInput, WebsiteContent } from "./types";
 
+function mergeContent(parsed: any): WebsiteContent {
+  if (!parsed || typeof parsed !== "object") return defaultContent;
+  
+  return {
+    logo: {
+      type: parsed.logo?.type ?? defaultContent.logo.type,
+      initials: parsed.logo?.initials ?? defaultContent.logo.initials,
+      text: parsed.logo?.text ?? defaultContent.logo.text,
+      subtext: parsed.logo?.subtext ?? defaultContent.logo.subtext,
+      imageUrl: parsed.logo?.imageUrl ?? defaultContent.logo.imageUrl,
+    },
+    hero: {
+      badge: parsed.hero?.badge ?? defaultContent.hero.badge,
+      headlinePart1: parsed.hero?.headlinePart1 ?? defaultContent.hero.headlinePart1,
+      headlineItalic: parsed.hero?.headlineItalic ?? defaultContent.hero.headlineItalic,
+      headlinePart3: parsed.hero?.headlinePart3 ?? defaultContent.hero.headlinePart3,
+      subtitle: parsed.hero?.subtitle ?? defaultContent.hero.subtitle,
+      whatsappBtn: parsed.hero?.whatsappBtn ?? defaultContent.hero.whatsappBtn,
+      emailBtn: parsed.hero?.emailBtn ?? defaultContent.hero.emailBtn,
+    },
+    marquee: Array.isArray(parsed.marquee) ? parsed.marquee : defaultContent.marquee,
+    servicesSection: {
+      tag: parsed.servicesSection?.tag ?? defaultContent.servicesSection.tag,
+      title: parsed.servicesSection?.title ?? defaultContent.servicesSection.title,
+      description: parsed.servicesSection?.description ?? defaultContent.servicesSection.description,
+      items: Array.isArray(parsed.servicesSection?.items) ? parsed.servicesSection.items : defaultContent.servicesSection.items,
+    },
+    ctaBanner: {
+      quote: parsed.ctaBanner?.quote ?? defaultContent.ctaBanner.quote,
+      buttonText: parsed.ctaBanner?.buttonText ?? defaultContent.ctaBanner.buttonText,
+    },
+    aboutSection: {
+      tag: parsed.aboutSection?.tag ?? defaultContent.aboutSection.tag,
+      title: parsed.aboutSection?.title ?? defaultContent.aboutSection.title,
+      metric1Val: parsed.aboutSection?.metric1Val ?? defaultContent.aboutSection.metric1Val,
+      metric1Label: parsed.aboutSection?.metric1Label ?? defaultContent.aboutSection.metric1Label,
+      metric2Val: parsed.aboutSection?.metric2Val ?? defaultContent.aboutSection.metric2Val,
+      metric2Label: parsed.aboutSection?.metric2Label ?? defaultContent.aboutSection.metric2Label,
+      body: parsed.aboutSection?.body ?? defaultContent.aboutSection.body,
+      quote: parsed.aboutSection?.quote ?? defaultContent.aboutSection.quote,
+      buttonText: parsed.aboutSection?.buttonText ?? defaultContent.aboutSection.buttonText,
+    },
+    whatWeDo: {
+      tag: parsed.whatWeDo?.tag ?? defaultContent.whatWeDo.tag,
+      title: parsed.whatWeDo?.title ?? defaultContent.whatWeDo.title,
+      description1: parsed.whatWeDo?.description1 ?? defaultContent.whatWeDo.description1,
+      description2: parsed.whatWeDo?.description2 ?? defaultContent.whatWeDo.description2,
+      items: Array.isArray(parsed.whatWeDo?.items) ? parsed.whatWeDo.items : defaultContent.whatWeDo.items,
+    },
+    visionSection: {
+      tag: parsed.visionSection?.tag ?? defaultContent.visionSection.tag,
+      quote: parsed.visionSection?.quote ?? defaultContent.visionSection.quote,
+      visionTitle: parsed.visionSection?.visionTitle ?? defaultContent.visionSection.visionTitle,
+      visionBody: parsed.visionSection?.visionBody ?? defaultContent.visionSection.visionBody,
+      missionTitle: parsed.visionSection?.missionTitle ?? defaultContent.visionSection.missionTitle,
+      missionBody: parsed.visionSection?.missionBody ?? defaultContent.visionSection.missionBody,
+    },
+    whySection: {
+      tag: parsed.whySection?.tag ?? defaultContent.whySection.tag,
+      title: parsed.whySection?.title ?? defaultContent.whySection.title,
+      description: parsed.whySection?.description ?? defaultContent.whySection.description,
+      items: Array.isArray(parsed.whySection?.items) ? parsed.whySection.items : defaultContent.whySection.items,
+    },
+    founderSpotlight: {
+      tag: parsed.founderSpotlight?.tag ?? defaultContent.founderSpotlight.tag,
+      name: parsed.founderSpotlight?.name ?? defaultContent.founderSpotlight.name,
+      title: parsed.founderSpotlight?.title ?? defaultContent.founderSpotlight.title,
+      quote: parsed.founderSpotlight?.quote ?? defaultContent.founderSpotlight.quote,
+      buttonText: parsed.founderSpotlight?.buttonText ?? defaultContent.founderSpotlight.buttonText,
+    },
+    contactSection: {
+      tag: parsed.contactSection?.tag ?? defaultContent.contactSection.tag,
+      title: parsed.contactSection?.title ?? defaultContent.contactSection.title,
+      description: parsed.contactSection?.description ?? defaultContent.contactSection.description,
+      addressTitle: parsed.contactSection?.addressTitle ?? defaultContent.contactSection.addressTitle,
+      addressValue: parsed.contactSection?.addressValue ?? defaultContent.contactSection.addressValue,
+      phoneTitle: parsed.contactSection?.phoneTitle ?? defaultContent.contactSection.phoneTitle,
+      phoneValue: parsed.contactSection?.phoneValue ?? defaultContent.contactSection.phoneValue,
+      emailTitle: parsed.contactSection?.emailTitle ?? defaultContent.contactSection.emailTitle,
+      emailValue: parsed.contactSection?.emailValue ?? defaultContent.contactSection.emailValue,
+      coordinatesTitle: parsed.contactSection?.coordinatesTitle ?? defaultContent.contactSection.coordinatesTitle,
+      coordinatesValue: parsed.contactSection?.coordinatesValue ?? defaultContent.contactSection.coordinatesValue,
+      coordinatesCity: parsed.contactSection?.coordinatesCity ?? defaultContent.contactSection.coordinatesCity,
+      coordinatesBtn: parsed.contactSection?.coordinatesBtn ?? defaultContent.contactSection.coordinatesBtn,
+    },
+    footer: {
+      title: parsed.footer?.title ?? defaultContent.footer.title,
+      description: parsed.footer?.description ?? defaultContent.footer.description,
+      contactTitle: parsed.footer?.contactTitle ?? defaultContent.footer.contactTitle,
+      addressTitle: parsed.footer?.addressTitle ?? defaultContent.footer.addressTitle,
+      addressValue: parsed.footer?.addressValue ?? defaultContent.footer.addressValue,
+      copyright: parsed.footer?.copyright ?? defaultContent.footer.copyright,
+      link1: parsed.footer?.link1 ?? defaultContent.footer.link1,
+      link2: parsed.footer?.link2 ?? defaultContent.footer.link2,
+    }
+  };
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState<WebsiteContent>(() => {
     const saved = localStorage.getItem("cfosdesk_content");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return mergeContent(parsed);
       } catch (e) {
         console.error("Failed to parse saved website content", e);
       }
@@ -57,8 +156,9 @@ export default function App() {
         if (response.ok) {
           const apiData = await response.json();
           if (apiData) {
-            setContent(apiData);
-            localStorage.setItem("cfosdesk_content", JSON.stringify(apiData));
+            const merged = mergeContent(apiData);
+            setContent(merged);
+            localStorage.setItem("cfosdesk_content", JSON.stringify(merged));
           }
         }
       } catch (error) {

@@ -2,7 +2,8 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
-import { Firestore } from "@google-cloud/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 async function startServer() {
   const app = express();
@@ -14,22 +15,20 @@ async function startServer() {
 
   const contentFilePath = path.join(process.cwd(), "content.json");
 
-  // Initialize Server-side Firestore for global persistence
-  let db: Firestore | null = null;
+  // Initialize Client-side Firebase Firestore for global persistence via API Key
+  let db: any = null;
   try {
     const firebaseConfigPath = path.join(process.cwd(), "firebase-applet-config.json");
     if (fs.existsSync(firebaseConfigPath)) {
       const firebaseConfig = JSON.parse(fs.readFileSync(firebaseConfigPath, "utf8"));
-      db = new Firestore({
-        projectId: firebaseConfig.projectId,
-        databaseId: firebaseConfig.firestoreDatabaseId,
-      });
-      console.log("Server-side Firestore initialized successfully. Project:", firebaseConfig.projectId, "DB:", firebaseConfig.firestoreDatabaseId);
+      const firebaseApp = initializeApp(firebaseConfig);
+      db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+      console.log("Firebase Firestore initialized successfully with API Key. DB ID:", firebaseConfig.firestoreDatabaseId);
     } else {
       console.warn("firebase-applet-config.json not found. Falling back to local file storage only.");
     }
   } catch (error) {
-    console.error("Failed to initialize Server-side Firestore, falling back to local file storage:", error);
+    console.error("Failed to initialize Firebase Firestore, falling back to local file storage:", error);
   }
 
   // API to retrieve the current shared content
@@ -38,10 +37,10 @@ async function startServer() {
       // 1. Try reading from Firestore first for true global state
       if (db) {
         try {
-          const docRef = db.collection("config").doc("website");
-          const docSnap = await docRef.get();
-          if (docSnap.exists) {
-            console.log("Loaded content globally from Firestore.");
+          const docRef = doc(db, "config", "website");
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            console.log("Loaded content globally from Firestore via API Key.");
             return res.json(docSnap.data());
           }
         } catch (dbError) {
@@ -69,9 +68,9 @@ async function startServer() {
       // 1. Persist to Firestore first for global synchronicity
       if (db) {
         try {
-          const docRef = db.collection("config").doc("website");
-          await docRef.set(data);
-          console.log("Saved content globally to Firestore.");
+          const docRef = doc(db, "config", "website");
+          await setDoc(docRef, data);
+          console.log("Saved content globally to Firestore via API Key.");
         } catch (dbError) {
           console.error("Error saving to Firestore:", dbError);
         }

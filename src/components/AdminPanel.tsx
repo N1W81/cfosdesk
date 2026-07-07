@@ -84,14 +84,47 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        setEditedContent(prev => ({
-          ...prev,
-          logo: {
-            ...prev.logo,
-            type: "image",
-            imageUrl: event.target!.result as string
+        const img = new Image();
+        img.onload = () => {
+          // Constrain maximum width or height of logo to 300px for perfectly crisp display on high-DPI screens
+          // while keeping base64 size extremely small (typically under 15-30KB)
+          const maxDim = 300;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
           }
-        }));
+          
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Check if source file is png or svg to preserve transparency
+            const isPng = file.type === "image/png" || file.type === "image/svg+xml";
+            const compressedBase64 = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.85);
+            
+            setEditedContent(prev => ({
+              ...prev,
+              logo: {
+                ...prev.logo,
+                type: "image",
+                imageUrl: compressedBase64
+              }
+            }));
+          }
+        };
+        img.src = event.target.result as string;
       }
     };
     reader.readAsDataURL(file);

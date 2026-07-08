@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
 
 // Helper to convert Firestore REST fields format to plain JSON
 function fromFirestore(fields: any): any {
@@ -74,6 +75,22 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Initialize Supabase client lazily to avoid startup crash if keys are missing
+  let supabaseClient: any = null;
+  const supabaseUrl = process.env.SUPABASE_URL || "";
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
+
+  if (supabaseUrl && supabaseAnonKey) {
+    try {
+      supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+      console.log("Supabase Client initialized successfully.");
+    } catch (err) {
+      console.error("Failed to initialize Supabase Client:", err);
+    }
+  } else {
+    console.log("Supabase URL and Key not fully configured. Using fallback cloud database (Firebase) or local file storage.");
+  }
+
   // Crucial: parse JSON payloads with high limit because logo images can be uploaded as base64
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -99,7 +116,27 @@ async function startServer() {
   // API to retrieve the current shared content
   app.get("/api/content", async (req, res) => {
     try {
-      // 1. Try reading from Firestore REST API first for true global state
+      // 1. Try reading from Supabase first if configured
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("configs")
+            .select("value")
+            .eq("key", "website")
+            .single();
+
+          if (!error && data && data.value) {
+            console.log("Loaded content globally from Supabase.");
+            return res.json(data.value);
+          } else if (error && error.code !== "PGRST116") {
+            console.error("Supabase returned error on read:", error);
+          }
+        } catch (dbError) {
+          console.error("Error fetching from Supabase, trying Firebase/local fallbacks:", dbError);
+        }
+      }
+
+      // 2. Try reading from Firestore REST API next for true global state
       if (firestoreUrl) {
         try {
           const response = await fetch(firestoreUrl);
@@ -120,7 +157,7 @@ async function startServer() {
         }
       }
 
-      // 2. Fallback to local content.json on disk
+      // 3. Fallback to local content.json on disk
       if (fs.existsSync(contentFilePath)) {
         const fileData = fs.readFileSync(contentFilePath, "utf8");
         return res.json(JSON.parse(fileData));
@@ -137,7 +174,24 @@ async function startServer() {
     try {
       const data = req.body;
 
-      // 1. Persist to Firestore REST API first for global synchronicity
+      // 1. Persist to Supabase if configured
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient
+            .from("configs")
+            .upsert({ key: "website", value: data }, { onConflict: "key" });
+
+          if (error) {
+            console.error("Error saving to Supabase:", error);
+          } else {
+            console.log("Saved content globally to Supabase.");
+          }
+        } catch (dbError) {
+          console.error("Error saving to Supabase, trying Firebase/local fallbacks:", dbError);
+        }
+      }
+
+      // 2. Persist to Firestore REST API next for global synchronicity
       if (firestoreUrl) {
         try {
           const response = await fetch(firestoreUrl, {
@@ -157,7 +211,7 @@ async function startServer() {
         }
       }
 
-      // 2. Also save to local file as backup and for offline reference
+      // 3. Also save to local file as backup and for offline reference
       fs.writeFileSync(contentFilePath, JSON.stringify(data, null, 2), "utf8");
       res.json({ success: true });
     } catch (error: any) {

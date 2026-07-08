@@ -148,7 +148,7 @@ export default function App() {
   });
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Fetch global shared content from server on mount with direct Firestore fallback
+  // Fetch global shared content from server on mount with direct Supabase fallback
   useEffect(() => {
     const fetchGlobalContent = async () => {
       let loadedFromApi = false;

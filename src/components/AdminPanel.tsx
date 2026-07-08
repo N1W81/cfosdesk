@@ -44,12 +44,23 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Non-blocking custom alert/notification toasts and confirmations
+  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   // Sync state with currentContent when panel is opened
   React.useEffect(() => {
     if (isOpen) {
       setEditedContent({ ...currentContent });
     }
   }, [isOpen, currentContent]);
+
+  const showNotification = (message: string, type: "success" | "error" | "info" = "info") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.message === message ? null : prev));
+    }, 5000);
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,9 +83,13 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   };
 
   const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset all copy back to the original default? This will overwrite your custom changes.")) {
-      setEditedContent({ ...defaultContent });
-    }
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    setEditedContent({ ...defaultContent });
+    setShowResetConfirm(false);
+    showNotification("Restored default configuration content! Click 'Save & Apply Changes' below to apply.", "info");
   };
 
   const handleLogoUpload = (file: File) => {
@@ -191,12 +206,12 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
         const parsed = JSON.parse(event.target?.result as string);
         if (parsed && typeof parsed === 'object' && 'logo' in parsed) {
           setEditedContent(parsed);
-          alert("Configuration loaded successfully! Click 'Save & Apply Changes' at the bottom to publish it globally.");
+          showNotification("Configuration loaded successfully! Click 'Save & Apply Changes' at the bottom to publish it globally.", "success");
         } else {
-          alert("Invalid website configuration file structure.");
+          showNotification("Invalid website configuration file structure.", "error");
         }
       } catch (e) {
-        alert("Failed to parse configuration file. Make sure it's valid JSON.");
+        showNotification("Failed to parse configuration file. Make sure it's valid JSON.", "error");
       }
     };
     reader.readAsText(file);
@@ -1449,7 +1464,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
               </div>
             </div>
 
-            {/* Toast feedback */}
+            {/* Custom dialogs and feedback toasts */}
             <AnimatePresence>
               {showSaveToast && (
                 <motion.div
@@ -1463,6 +1478,71 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                     <strong className="block text-emerald-200">Changes Saved Globally!</strong>
                     <span>Your edits have been synchronized successfully for everyone via Supabase Database.</span>
                   </div>
+                </motion.div>
+              )}
+
+              {notification && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 30, scale: 0.95 }}
+                  className="absolute bottom-24 right-6 bg-[#030C1B] border border-[#E2D4B7]/20 shadow-2xl p-4 rounded-xl flex items-center gap-3 z-50 font-mono text-xs max-w-sm"
+                >
+                  {notification.type === "success" && (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  )}
+                  {notification.type === "error" && (
+                    <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
+                  )}
+                  {notification.type === "info" && (
+                    <Sliders className="w-5 h-5 text-sky-400 shrink-0" />
+                  )}
+                  <div>
+                    <strong className="block text-zinc-100 uppercase tracking-wider text-[10px] mb-0.5">
+                      {notification.type === "success" ? "Success" : notification.type === "error" ? "Error" : "Notice"}
+                    </strong>
+                    <span className="text-zinc-300 font-light">{notification.message}</span>
+                  </div>
+                </motion.div>
+              )}
+
+              {showResetConfirm && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 20 }}
+                    className="max-w-md w-full bg-[#071329] border border-[#E2D4B7]/20 p-6 rounded-2xl shadow-2xl space-y-5 text-[#F5F2EB]"
+                  >
+                    <div className="flex items-center gap-3 text-[#DCAE9F]">
+                      <RotateCcw className="w-6 h-6 text-[#E2D4B7]" />
+                      <h3 className="font-serif text-lg font-light">Confirm Reset to Defaults</h3>
+                    </div>
+                    <p className="text-zinc-300 text-xs font-light leading-relaxed">
+                      Are you sure you want to reset all website copy back to the original default values? This action will overwrite all custom modifications you have made in this panel.
+                    </p>
+                    <div className="flex gap-3 justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowResetConfirm(false)}
+                        className="px-4 py-2 text-xs font-mono uppercase tracking-wider border border-white/10 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={confirmReset}
+                        className="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-400 rounded-xl transition-all cursor-pointer"
+                      >
+                        Yes, Reset Copy
+                      </button>
+                    </div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>

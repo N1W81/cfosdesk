@@ -33,6 +33,60 @@ async function startServer() {
 
   const contentFilePath = path.join(process.cwd(), "content.json");
 
+  // New API endpoint to check Supabase connection status and guide configuration
+  app.get("/api/db-status", async (req, res) => {
+    if (!supabaseClient) {
+      return res.json({
+        status: "not_configured",
+        message: "Supabase environment variables (SUPABASE_URL, SUPABASE_ANON_KEY) are not set. The app is falling back to saving changes on the server's local disk (content.json)."
+      });
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("configs")
+        .select("key")
+        .limit(1);
+
+      if (error) {
+        if (error.code === "42P01") {
+          return res.json({
+            status: "table_missing",
+            message: "Database connection successful, but the 'configs' table does not exist yet.",
+            sql: "CREATE TABLE configs (\n  key TEXT PRIMARY KEY,\n  value JSONB\n);"
+          });
+        }
+        return res.json({
+          status: "error",
+          message: error.message || "Unknown database error",
+          code: error.code
+        });
+      }
+
+      // Check for potential duplicate rows if constraint was omitted
+      const { data: rows } = await supabaseClient
+        .from("configs")
+        .select("key")
+        .eq("key", "website");
+
+      const hasDuplicates = rows && rows.length > 1;
+
+      return res.json({
+        status: "connected",
+        message: hasDuplicates 
+          ? "Supabase connected. Note: Duplicates found, 'key' is missing a UNIQUE/PRIMARY KEY constraint." 
+          : "Supabase database is connected and active globally.",
+        hasDuplicates,
+        sqlFix: hasDuplicates ? "ALTER TABLE configs ADD PRIMARY KEY (key);" : null
+      });
+    } catch (err: any) {
+      return res.json({
+        status: "error",
+        message: err.message || "Failed to contact database"
+      });
+    }
+  });
+
   // API to retrieve the current shared content
   app.get("/api/content", async (req, res) => {
     try {
@@ -42,17 +96,33 @@ async function startServer() {
           const { data, error } = await supabaseClient
             .from("configs")
             .select("value")
-            .eq("key", "website")
-            .single();
+            .eq("key", "website");
 
-          if (!error && data && data.value) {
-            console.log("Loaded content globally from Supabase.");
-            return res.json(data.value);
-          } else if (error && error.code !== "PGRST116") {
-            console.error("Supabase returned error on read:", error);
+          if (error) {
+            if (error.code === "42P01") {
+              console.warn("\n==================================================");
+              console.warn("⚠️  SUPABASE TABLE MISSING  ⚠️");
+              console.warn("Table 'configs' does not exist in your Supabase database!");
+              console.warn("Please run the following SQL query in your Supabase SQL Editor:");
+              console.warn("\nCREATE TABLE configs (\n  key TEXT PRIMARY KEY,\n  value JSONB\n);\n");
+              console.warn("==================================================\n");
+            } else {
+              console.error("Supabase returned error on read:", error);
+            }
+          } else if (data && data.length > 0) {
+            if (data.length > 1) {
+              console.warn("\n⚠️ [SUPABASE WARNING] Multiple rows found for key 'website'.");
+              console.warn("This means your 'configs' table 'key' column is missing a PRIMARY KEY or UNIQUE constraint.");
+              console.warn("To fix this, please execute this SQL in your Supabase SQL Editor:");
+              console.warn("ALTER TABLE configs ADD PRIMARY KEY (key);\n");
+            }
+            console.log(`Loaded content globally from Supabase (selected latest of ${data.length} records).`);
+            return res.json(data[data.length - 1].value);
+          } else {
+            console.log("Supabase configs table is empty. Falling back to local file.");
           }
         } catch (dbError) {
-          console.error("Error fetching from Supabase, trying Firebase/local fallbacks:", dbError);
+          console.error("Error fetching from Supabase, trying fallback:", dbError);
         }
       }
 
@@ -83,6 +153,10 @@ async function startServer() {
 
           if (error) {
             console.error("Error saving to Supabase:", error);
+            if (error.code === "42P01") {
+              console.error("\n[SUPABASE ERROR] Table 'configs' does not exist! Saving globally skipped.");
+              console.error("Please run the SQL schema script in Supabase:\nCREATE TABLE configs (key TEXT PRIMARY KEY, value JSONB);\n");
+            }
           } else {
             console.log("Saved content globally to Supabase.");
           }

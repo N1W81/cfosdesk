@@ -19,7 +19,8 @@ import {
   Image,
   UploadCloud,
   Download,
-  Upload
+  Upload,
+  Database
 } from "lucide-react";
 import { WebsiteContent, Service, Differentiator, ChecklistItem } from "../types";
 import { defaultContent } from "../defaultContent";
@@ -48,10 +49,38 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // Global database persistence status indicators
+  const [dbStatus, setDbStatus] = useState<{
+    status: "loading" | "not_configured" | "table_missing" | "connected" | "error";
+    message: string;
+    sql?: string;
+    sqlFix?: string;
+  }>({ status: "loading", message: "Checking global storage status..." });
+  const [showDbGuide, setShowDbGuide] = useState(false);
+
   // Sync state with currentContent when panel is opened
   React.useEffect(() => {
     if (isOpen) {
       setEditedContent({ ...currentContent });
+      
+      // Fetch DB connection/tables status
+      fetch("/api/db-status")
+        .then((res) => res.json())
+        .then((data) => {
+          setDbStatus({
+            status: data.status,
+            message: data.message,
+            sql: data.sql,
+            sqlFix: data.sqlFix
+          });
+        })
+        .catch((err) => {
+          console.error("Failed to query db status:", err);
+          setDbStatus({
+            status: "error",
+            message: "Failed to connect to database helper endpoint."
+          });
+        });
     }
   }, [isOpen, currentContent]);
 
@@ -1436,8 +1465,54 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
             </div>
 
             {/* Footer buttons row */}
-            <div className="p-6 border-t border-[#E2D4B7]/10 flex justify-between items-center bg-[#071329]">
-              <span className="font-mono text-[9px] text-[#DCAE9F]/60 uppercase tracking-widest hidden sm:inline">Authenticated Session</span>
+            <div className="p-6 border-t border-[#E2D4B7]/10 flex flex-col sm:flex-row justify-between items-center bg-[#071329] gap-4">
+              <div 
+                onClick={() => {
+                  if (dbStatus.status !== "connected" || dbStatus.sqlFix) {
+                    setShowDbGuide(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-[10px] uppercase tracking-wider select-none cursor-pointer border ${
+                  dbStatus.status === "connected"
+                    ? dbStatus.sqlFix
+                      ? "bg-amber-950/20 border-amber-500/20 text-amber-400 hover:bg-amber-950/40"
+                      : "bg-emerald-950/20 border-emerald-500/20 text-emerald-400"
+                    : dbStatus.status === "table_missing"
+                    ? "bg-red-950/20 border-red-500/20 text-red-400 hover:bg-red-950/40 animate-pulse"
+                    : dbStatus.status === "not_configured"
+                    ? "bg-zinc-800/30 border-zinc-700/30 text-zinc-400 hover:bg-zinc-850"
+                    : "bg-red-950/20 border-red-500/20 text-red-400 hover:bg-red-950/40"
+                } transition-all`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  dbStatus.status === "connected"
+                    ? dbStatus.sqlFix
+                      ? "bg-amber-400"
+                      : "bg-emerald-400"
+                    : dbStatus.status === "table_missing"
+                    ? "bg-red-500 animate-ping"
+                    : dbStatus.status === "not_configured"
+                    ? "bg-zinc-500"
+                    : "bg-red-500"
+                }`} />
+                <span className="font-semibold text-white/95">Storage Sync:</span>
+                <span>
+                  {dbStatus.status === "connected"
+                    ? dbStatus.sqlFix
+                      ? "Warning (Dupes)"
+                      : "Cloud Active"
+                    : dbStatus.status === "table_missing"
+                    ? "Setup Needed"
+                    : dbStatus.status === "not_configured"
+                    ? "Local File"
+                    : dbStatus.status === "loading"
+                    ? "Checking..."
+                    : "Error"}
+                </span>
+                {(dbStatus.status !== "connected" || dbStatus.sqlFix) && dbStatus.status !== "loading" && (
+                  <span className="text-[9px] text-[#DCAE9F]/60 normal-case border-l border-white/10 pl-2">inspect guide</span>
+                )}
+              </div>
               
               <div className="flex gap-3 w-full sm:w-auto justify-end">
                 <button
@@ -1532,6 +1607,117 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                         className="px-4 py-2 text-xs font-mono uppercase tracking-wider bg-red-950/40 hover:bg-red-900/60 border border-red-500/30 text-red-400 rounded-xl transition-all cursor-pointer"
                       >
                         Yes, Reset Copy
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {showDbGuide && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-6 z-50 text-left"
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.95, y: 20 }}
+                    className="max-w-xl w-full bg-[#071329] border border-[#E2D4B7]/20 p-6 rounded-2xl shadow-2xl space-y-5 text-[#F5F2EB] max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Database className="w-6 h-6 text-[#E2D4B7]" />
+                        <div>
+                          <h3 className="font-serif text-lg font-light">Global Shared Database Status</h3>
+                          <p className="font-mono text-[9px] uppercase tracking-widest text-[#DCAE9F]">Supabase Persistence Sync</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowDbGuide(false)}
+                        className="p-1 rounded-lg hover:bg-white/5 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs font-light leading-relaxed">
+                      <div className="text-zinc-300">
+                        {dbStatus.status === "not_configured" && (
+                          <p>
+                            Your application is currently running using <strong>Local Server File Storage</strong> (<code>content.json</code>). Because serverless hosting is ephemeral, <strong>your changes will only persist until the server restarts, and edits cannot be synced across multiple users or browsers.</strong>
+                          </p>
+                        )}
+                        {dbStatus.status === "table_missing" && (
+                          <p>
+                            Awesome! Your Supabase environment keys are detected and loaded, but the <strong><code>configs</code> database table</strong> was not found in your Supabase project. Let's create it!
+                          </p>
+                        )}
+                        {dbStatus.status === "connected" && dbStatus.sqlFix && (
+                          <p>
+                            Your database is connected, but the <code>configs</code> table is missing a <strong>PRIMARY KEY</strong> constraint on the <code>key</code> column. This causes duplicate rows to get created and will break single-row retrievals. Let's fix it!
+                          </p>
+                        )}
+                        {dbStatus.status === "error" && (
+                          <p>
+                            The database returned an unexpected error: <code className="bg-red-950/40 text-red-400 px-1.5 py-0.5 rounded font-mono text-[11px]">{dbStatus.message}</code>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* SQL Instructions block */}
+                      {(dbStatus.status === "table_missing" || (dbStatus.status === "connected" && dbStatus.sqlFix)) && (
+                        <div className="space-y-2">
+                          <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">SQL Script to Execute</label>
+                          <div className="relative">
+                            <pre className="p-4 rounded-xl bg-black/60 border border-white/5 font-mono text-[11px] text-zinc-300 overflow-x-auto select-all">
+                              {dbStatus.status === "table_missing" ? dbStatus.sql : dbStatus.sqlFix}
+                            </pre>
+                            <span className="absolute right-3 bottom-2 text-[9px] font-mono text-[#DCAE9F]/40 pointer-events-none">Double-click to select all</span>
+                          </div>
+                          
+                          <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 space-y-1.5 text-[11px] text-zinc-400">
+                            <strong className="text-zinc-300 font-medium block">How to run this:</strong>
+                            <ol className="list-decimal list-inside space-y-1 text-zinc-300">
+                              <li>Go to your <strong>Supabase Dashboard</strong> (supabase.com).</li>
+                              <li>Click on the <strong>SQL Editor</strong> tab in the left sidebar navigation.</li>
+                              <li>Click <strong>"New query"</strong> to open a blank SQL query tab.</li>
+                              <li>Copy-paste the SQL block above and click the green <strong>"Run"</strong> button.</li>
+                              <li>Once done, refresh this panel! The status dot below will glow green.</li>
+                            </ol>
+                          </div>
+                        </div>
+                      )}
+
+                      {dbStatus.status === "not_configured" && (
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-2.5">
+                          <strong className="text-zinc-300 font-medium block">How to configure global storage:</strong>
+                          <p className="text-zinc-400 text-[11px] leading-relaxed">
+                            To ensure changes are saved forever and shared instantly among all visitors, set up a free Supabase database:
+                          </p>
+                          <ul className="list-disc list-inside space-y-1.5 pl-1 text-[11px] text-[#DCAE9F] leading-relaxed">
+                            <li>Create a project at <a href="https://supabase.com" target="_blank" rel="noreferrer" className="underline hover:text-white">supabase.com</a>.</li>
+                            <li>Go to Project Settings &rarr; API to copy your <strong>Project URL</strong> and <strong>anon public key</strong>.</li>
+                            <li>Configure them inside the <strong>Secrets panel</strong> of your hosting environment / AI Studio with the keys:
+                              <div className="mt-1.5 flex flex-col gap-1 font-mono text-[10px] bg-black/30 p-2.5 rounded border border-white/5 text-zinc-300">
+                                <span>SUPABASE_URL = "https://your-project.supabase.co"</span>
+                                <span>SUPABASE_ANON_KEY = "your-anon-public-key"</span>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowDbGuide(false)}
+                        className="px-5 py-2 text-xs font-mono uppercase tracking-wider bg-white/5 border border-white/10 rounded-xl text-[#F5F2EB] hover:bg-white/10 transition-all cursor-pointer"
+                      >
+                        Close Guide
                       </button>
                     </div>
                   </motion.div>

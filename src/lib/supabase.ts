@@ -40,14 +40,37 @@ export async function fetchContentFromSupabase(): Promise<any | null> {
     const { data, error } = await supabaseClient
       .from("configs")
       .select("value")
-      .eq("key", "website")
-      .single();
+      .eq("key", "website");
 
-    if (!error && data && data.value) {
-      console.log("Fetched content directly from Supabase client-side.");
-      return data.value;
-    } else if (error) {
-      console.error("Supabase client-side read error:", error);
+    if (error) {
+      if (error.code === "42P01") {
+        console.warn(
+          "\n==================================================\n" +
+          "⚠️  SUPABASE TABLE MISSING (CLIENT SIDE) ⚠️\n" +
+          "Table 'configs' does not exist in your Supabase database!\n" +
+          "Please execute the following SQL statement in your Supabase dashboard SQL Editor:\n\n" +
+          "CREATE TABLE configs (\n  key TEXT PRIMARY KEY,\n  value JSONB\n);\n" +
+          "==================================================\n"
+        );
+      } else {
+        console.error("Supabase client-side read error:", error);
+      }
+      return null;
+    }
+
+    if (data && data.length > 0) {
+      if (data.length > 1) {
+        console.warn(
+          "\n==================================================\n" +
+          "⚠️  SUPABASE DUPLICATES DETECTED (CLIENT SIDE) ⚠️\n" +
+          "Multiple records found for 'website'. Your 'configs' table 'key' column is missing a PRIMARY KEY constraint.\n" +
+          "Please execute this SQL query to resolve duplicates and enforce uniqueness:\n\n" +
+          "ALTER TABLE configs ADD PRIMARY KEY (key);\n" +
+          "==================================================\n"
+        );
+      }
+      console.log(`Fetched content directly from Supabase client-side (selected latest of ${data.length} records).`);
+      return data[data.length - 1].value;
     }
   } catch (error) {
     console.error("Failed to fetch directly from Supabase:", error);

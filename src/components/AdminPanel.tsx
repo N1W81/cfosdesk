@@ -78,10 +78,12 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   };
 
   const handleLogoUpload = (file: File) => {
-    if (!file.type.startsWith("image/") && !file.name.match(/\.(png|jpe?g|gif|svg|webp)$/i)) {
-      console.warn("Unsupported file type selected:", file.type, file.name);
+    if (!file) {
+      console.warn("No file provided to handleLogoUpload");
       return;
     }
+
+    console.log("Processing uploaded logo:", file.name, "type:", file.type, "size:", file.size);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -588,15 +590,11 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                           <div className="space-y-1.5">
                             <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Upload Custom Logo Image</label>
                             
-                            <input
+                             <input
                               id="logo-file-picker"
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onClick={(e) => {
-                                // Prevent bubbling to stop parent onClick from executing and triggering infinite recursion or double click loops
-                                e.stopPropagation();
-                              }}
                               onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) {
                                   handleLogoUpload(e.target.files[0]);
@@ -606,7 +604,8 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                               }}
                             />
 
-                            <div
+                            <label
+                              htmlFor="logo-file-picker"
                               onDragOver={(e) => {
                                 e.preventDefault();
                                 setIsDragging(true);
@@ -619,11 +618,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                                   handleLogoUpload(e.dataTransfer.files[0]);
                                 }
                               }}
-                              onClick={() => {
-                                const fileInput = document.getElementById("logo-file-picker");
-                                if (fileInput) fileInput.click();
-                              }}
-                              className={`group border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 bg-white/[0.01] ${
+                              className={`group border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 bg-white/[0.01] block ${
                                 isDragging
                                   ? "border-[#E2D4B7] bg-[#E2D4B7]/5 shadow-[0_0_20px_rgba(226,212,183,0.1)]"
                                   : "border-white/10 hover:border-[#E2D4B7]/50 hover:bg-white/[0.02]"
@@ -636,7 +631,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                               <p className="text-[10px] font-mono text-zinc-500 mt-1.5">
                                 Supports PNG, JPG, JPEG, WEBP or SVG format
                               </p>
-                            </div>
+                            </label>
                           </div>
 
                           <div className="space-y-1.5">

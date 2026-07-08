@@ -412,10 +412,10 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                     <span>Global Sync Status</span>
                   </div>
                   <p className="text-zinc-400 text-[10px] leading-relaxed font-light">
-                    Your changes sync globally for everyone via <span className="text-[#E2D4B7] font-medium">Firebase Firestore</span>.
+                    Your changes sync globally for everyone via <span className="text-[#E2D4B7] font-medium">Supabase Database</span>.
                   </p>
                   <p className="text-zinc-500 text-[9px] leading-relaxed font-mono">
-                    Firebase Spark is <span className="text-emerald-400 font-semibold">100% Free</span> (50k reads & 20k writes/day free limit). You will never be billed.
+                    Supabase tier provides high performance <span className="text-emerald-400 font-semibold">Real-Time Sync</span> with secure fallback mechanisms.
                   </p>
 
                   <div className="pt-2 border-t border-white/5 space-y-2">
@@ -1421,7 +1421,7 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                   <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                   <div>
                     <strong className="block text-emerald-200">Changes Saved Globally!</strong>
-                    <span>Your edits have been synchronized successfully for everyone via Firebase Firestore.</span>
+                    <span>Your edits have been synchronized successfully for everyone via Supabase Database.</span>
                   </div>
                 </motion.div>
               )}

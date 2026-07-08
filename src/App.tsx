@@ -171,20 +171,20 @@ export default function App() {
         console.error("Error loading shared content from API:", error);
       }
 
-      // Fallback: If API fails, fetch directly from Firestore client-side
+      // Fallback: If API fails, fetch directly from Supabase client-side
       if (!loadedFromApi) {
-        console.log("API not available or invalid. Attempting direct client-side Firestore connection...");
+        console.log("API not available or invalid. Attempting direct client-side Supabase connection...");
         try {
-          const { fetchContentFromFirestore } = await import("./lib/firebase");
-          const firestoreData = await fetchContentFromFirestore();
-          if (firestoreData) {
-            const merged = mergeContent(firestoreData);
+          const { fetchContentFromSupabase } = await import("./lib/supabase");
+          const supabaseData = await fetchContentFromSupabase();
+          if (supabaseData) {
+            const merged = mergeContent(supabaseData);
             setContent(merged);
             localStorage.setItem("cfosdesk_content", JSON.stringify(merged));
-            console.log("Successfully loaded content directly from Firestore.");
+            console.log("Successfully loaded content directly from Supabase.");
           }
-        } catch (fsError) {
-          console.error("Failed to fetch directly from Firestore:", fsError);
+        } catch (sbError) {
+          console.error("Failed to fetch directly from Supabase:", sbError);
         }
       }
     };
@@ -269,19 +269,19 @@ export default function App() {
       console.error("Error saving content to API:", error);
     }
 
-    // Fallback: If API save fails (e.g. static cPanel hosting), save directly to Firestore client-side
+    // Fallback: If API save fails (e.g. static cPanel hosting), save directly to Supabase client-side
     if (!savedViaApi) {
-      console.log("API save failed or not supported. Saving directly to Firestore client-side...");
+      console.log("API save failed or not supported. Saving directly to Supabase client-side...");
       try {
-        const { saveContentToFirestore } = await import("./lib/firebase");
-        const success = await saveContentToFirestore(newContent);
+        const { saveContentToSupabase } = await import("./lib/supabase");
+        const success = await saveContentToSupabase(newContent);
         if (success) {
-          console.log("Saved content directly to Firestore successfully.");
+          console.log("Saved content directly to Supabase successfully.");
         } else {
-          console.error("Failed to save content to Firestore client-side.");
+          console.error("Failed to save content to Supabase client-side.");
         }
-      } catch (fsError) {
-        console.error("Failed to save directly to Firestore:", fsError);
+      } catch (sbError) {
+        console.error("Failed to save directly to Supabase:", sbError);
       }
     }
   };

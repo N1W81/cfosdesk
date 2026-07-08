@@ -77,18 +77,20 @@ async function startServer() {
 
   // Initialize Supabase client lazily to avoid startup crash if keys are missing
   let supabaseClient: any = null;
-  const supabaseUrl = process.env.SUPABASE_URL || "";
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
+  const supabaseUrl = (process.env.SUPABASE_URL || "").trim();
+  const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || "").trim();
 
-  if (supabaseUrl && supabaseAnonKey) {
+  const isValidUrl = supabaseUrl.startsWith("http://") || supabaseUrl.startsWith("https://");
+
+  if (supabaseUrl && supabaseAnonKey && isValidUrl) {
     try {
       supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
       console.log("Supabase Client initialized successfully.");
     } catch (err) {
-      console.error("Failed to initialize Supabase Client:", err);
+      console.log("Warning: Failed to initialize Supabase Client gracefully:", err);
     }
   } else {
-    console.log("Supabase URL and Key not fully configured. Using fallback cloud database (Firebase) or local file storage.");
+    console.log("Supabase URL and Key not fully configured or invalid. Using fallback cloud database (Firebase) or local file storage.");
   }
 
   // Crucial: parse JSON payloads with high limit because logo images can be uploaded as base64

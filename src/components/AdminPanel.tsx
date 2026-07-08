@@ -105,26 +105,22 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
       const rawBase64 = event.target?.result as string;
       if (!rawBase64) return;
 
-      // Fallback function to use raw base64 if canvas processing fails or is unnecessary
-      const useRawBase64Fallback = () => {
-        setEditedContent(prev => ({
-          ...prev,
-          logo: {
-            ...prev.logo,
-            type: "image",
-            imageUrl: rawBase64
-          }
-        }));
-      };
+      // SET THE LOGO IMMEDIATELY WITH THE RAW BASE64 TO ENSURE INSTANT & 100% ROBUST LOADING!
+      setEditedContent(prev => ({
+        ...prev,
+        logo: {
+          ...prev.logo,
+          type: "image",
+          imageUrl: rawBase64
+        }
+      }));
 
-      // 1. If it's an SVG, DO NOT draw to canvas. Canvas destroys vector scalability/quality and can fail.
-      if (file.type === "image/svg+xml" || file.name.endsWith(".svg")) {
-        console.log("SVG detected. Preserving original vector data URL directly.");
-        useRawBase64Fallback();
+      // If it's an SVG or very small, no need to resize at all
+      if (file.type === "image/svg+xml" || file.name.endsWith(".svg") || file.size < 150000) {
         return;
       }
 
-      // 2. Otherwise, attempt to resize to a sensible size (e.g. max 400px width/height) to optimize DB space
+      // In the background, attempt to optimize/compress larger images to keep database records neat
       const img = new Image();
       img.onload = () => {
         try {
@@ -149,32 +145,27 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const isPng = file.type === "image/png";
-            const compressedBase64 = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.9);
+            const isPng = file.type === "image/png" || file.name.endsWith(".png");
+            const compressedBase64 = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.85);
             
-            setEditedContent(prev => ({
-              ...prev,
-              logo: {
-                ...prev.logo,
-                type: "image",
-                imageUrl: compressedBase64
+            setEditedContent(prev => {
+              // Only update if the user hasn't uploaded another image in the meantime
+              if (prev.logo?.imageUrl === rawBase64) {
+                return {
+                  ...prev,
+                  logo: {
+                    ...prev.logo,
+                    imageUrl: compressedBase64
+                  }
+                };
               }
-            }));
-          } else {
-            console.warn("Could not get 2D canvas context. Falling back to raw base64.");
-            useRawBase64Fallback();
+              return prev;
+            });
           }
         } catch (err) {
-          console.error("Error processing image in canvas. Falling back to raw base64.", err);
-          useRawBase64Fallback();
+          console.warn("Background canvas compression skipped:", err);
         }
       };
-
-      img.onerror = () => {
-        console.error("Failed to load image element. Falling back to raw base64.");
-        useRawBase64Fallback();
-      };
-
       img.src = rawBase64;
     };
 
@@ -608,8 +599,9 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                              <input
                               id="logo-file-picker"
                               type="file"
-                              accept="image/*"
-                              className="hidden"
+                              accept="image/*, .png, .jpg, .jpeg, .svg, .webp, .gif, .bmp, .ico"
+                              className="absolute w-[1px] h-[1px] opacity-0 overflow-hidden pointer-events-none"
+                              style={{ top: 0, left: 0 }}
                               onChange={(e) => {
                                 if (e.target.files && e.target.files[0]) {
                                   handleLogoUpload(e.target.files[0]);

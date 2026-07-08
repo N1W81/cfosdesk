@@ -78,17 +78,40 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
   };
 
   const handleLogoUpload = (file: File) => {
-    if (!file.type.startsWith("image/")) {
+    if (!file.type.startsWith("image/") && !file.name.match(/\.(png|jpe?g|gif|svg|webp)$/i)) {
+      console.warn("Unsupported file type selected:", file.type, file.name);
       return;
     }
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      if (event.target?.result) {
-        const img = new Image();
-        img.onload = () => {
-          // Constrain maximum width or height of logo to 300px for perfectly crisp display on high-DPI screens
-          // while keeping base64 size extremely small (typically under 15-30KB)
-          const maxDim = 300;
+      const rawBase64 = event.target?.result as string;
+      if (!rawBase64) return;
+
+      // Fallback function to use raw base64 if canvas processing fails or is unnecessary
+      const useRawBase64Fallback = () => {
+        setEditedContent(prev => ({
+          ...prev,
+          logo: {
+            ...prev.logo,
+            type: "image",
+            imageUrl: rawBase64
+          }
+        }));
+      };
+
+      // 1. If it's an SVG, DO NOT draw to canvas. Canvas destroys vector scalability/quality and can fail.
+      if (file.type === "image/svg+xml" || file.name.endsWith(".svg")) {
+        console.log("SVG detected. Preserving original vector data URL directly.");
+        useRawBase64Fallback();
+        return;
+      }
+
+      // 2. Otherwise, attempt to resize to a sensible size (e.g. max 400px width/height) to optimize DB space
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 400;
           let width = img.width;
           let height = img.height;
           
@@ -109,10 +132,8 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // Check if source file is png or svg to preserve transparency
-            const isPng = file.type === "image/png" || file.type === "image/svg+xml";
-            const compressedBase64 = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.85);
+            const isPng = file.type === "image/png";
+            const compressedBase64 = canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.9);
             
             setEditedContent(prev => ({
               ...prev,
@@ -122,11 +143,28 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                 imageUrl: compressedBase64
               }
             }));
+          } else {
+            console.warn("Could not get 2D canvas context. Falling back to raw base64.");
+            useRawBase64Fallback();
           }
-        };
-        img.src = event.target.result as string;
-      }
+        } catch (err) {
+          console.error("Error processing image in canvas. Falling back to raw base64.", err);
+          useRawBase64Fallback();
+        }
+      };
+
+      img.onerror = () => {
+        console.error("Failed to load image element. Falling back to raw base64.");
+        useRawBase64Fallback();
+      };
+
+      img.src = rawBase64;
     };
+
+    reader.onerror = (err) => {
+      console.error("FileReader error reading uploaded file:", err);
+    };
+
     reader.readAsDataURL(file);
   };
 
@@ -550,6 +588,24 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                           <div className="space-y-1.5">
                             <label className="font-mono text-[10px] uppercase tracking-widest text-[#DCAE9F] block">Upload Custom Logo Image</label>
                             
+                            <input
+                              id="logo-file-picker"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onClick={(e) => {
+                                // Prevent bubbling to stop parent onClick from executing and triggering infinite recursion or double click loops
+                                e.stopPropagation();
+                              }}
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  handleLogoUpload(e.target.files[0]);
+                                  // Reset target value to ensure the same file can be uploaded again if needed
+                                  e.target.value = "";
+                                }
+                              }}
+                            />
+
                             <div
                               onDragOver={(e) => {
                                 e.preventDefault();
@@ -573,17 +629,6 @@ export default function AdminPanel({ isOpen, onClose, currentContent, onSave }: 
                                   : "border-white/10 hover:border-[#E2D4B7]/50 hover:bg-white/[0.02]"
                               }`}
                             >
-                              <input
-                                id="logo-file-picker"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  if (e.target.files && e.target.files[0]) {
-                                    handleLogoUpload(e.target.files[0]);
-                                  }
-                                }}
-                              />
                               <UploadCloud className="w-10 h-10 text-[#E2D4B7]/60 group-hover:text-[#E2D4B7] transition-all duration-300 mb-3" />
                               <p className="text-sm text-[#F5F2EB] font-light">
                                 Drag & Drop your logo image here, or <span className="text-[#E2D4B7] font-semibold underline decoration-dotted decoration-1">click to browse</span>

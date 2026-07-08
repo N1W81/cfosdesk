@@ -148,21 +148,44 @@ export default function App() {
   });
   const [isAdminOpen, setIsAdminOpen] = useState(false);
 
-  // Fetch global shared content from server on mount
+  // Fetch global shared content from server on mount with direct Firestore fallback
   useEffect(() => {
     const fetchGlobalContent = async () => {
+      let loadedFromApi = false;
       try {
         const response = await fetch("/api/content");
         if (response.ok) {
-          const apiData = await response.json();
-          if (apiData) {
-            const merged = mergeContent(apiData);
-            setContent(merged);
-            localStorage.setItem("cfosdesk_content", JSON.stringify(merged));
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const apiData = await response.json();
+            if (apiData && typeof apiData === "object" && !Array.isArray(apiData)) {
+              const merged = mergeContent(apiData);
+              setContent(merged);
+              localStorage.setItem("cfosdesk_content", JSON.stringify(merged));
+              loadedFromApi = true;
+              console.log("Loaded content successfully from API.");
+            }
           }
         }
       } catch (error) {
-        console.error("Error loading shared content from server:", error);
+        console.error("Error loading shared content from API:", error);
+      }
+
+      // Fallback: If API fails, fetch directly from Firestore client-side
+      if (!loadedFromApi) {
+        console.log("API not available or invalid. Attempting direct client-side Firestore connection...");
+        try {
+          const { fetchContentFromFirestore } = await import("./lib/firebase");
+          const firestoreData = await fetchContentFromFirestore();
+          if (firestoreData) {
+            const merged = mergeContent(firestoreData);
+            setContent(merged);
+            localStorage.setItem("cfosdesk_content", JSON.stringify(merged));
+            console.log("Successfully loaded content directly from Firestore.");
+          }
+        } catch (fsError) {
+          console.error("Failed to fetch directly from Firestore:", fsError);
+        }
       }
     };
     fetchGlobalContent();
@@ -226,6 +249,7 @@ export default function App() {
     setContent(newContent);
     localStorage.setItem("cfosdesk_content", JSON.stringify(newContent));
 
+    let savedViaApi = false;
     try {
       const response = await fetch("/api/content", {
         method: "POST",
@@ -234,11 +258,31 @@ export default function App() {
         },
         body: JSON.stringify(newContent),
       });
-      if (!response.ok) {
-        throw new Error("Failed to save content on server");
+      if (response.ok) {
+        const resData = await response.json();
+        if (resData && (resData.success || resData.status === "ok")) {
+          savedViaApi = true;
+          console.log("Saved content successfully via API.");
+        }
       }
     } catch (error) {
-      console.error("Error saving content to server:", error);
+      console.error("Error saving content to API:", error);
+    }
+
+    // Fallback: If API save fails (e.g. static cPanel hosting), save directly to Firestore client-side
+    if (!savedViaApi) {
+      console.log("API save failed or not supported. Saving directly to Firestore client-side...");
+      try {
+        const { saveContentToFirestore } = await import("./lib/firebase");
+        const success = await saveContentToFirestore(newContent);
+        if (success) {
+          console.log("Saved content directly to Firestore successfully.");
+        } else {
+          console.error("Failed to save content to Firestore client-side.");
+        }
+      } catch (fsError) {
+        console.error("Failed to save directly to Firestore:", fsError);
+      }
     }
   };
 
